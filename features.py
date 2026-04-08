@@ -2,7 +2,16 @@ from preprocess import preprocess
 import pandas as pd
 import nltk
 nltk.download('stopwords')
-stopwords = nltk.corpus.stopwords.words("english")
+from nltk.corpus import stopwords
+import joblib
+import os
+
+base_path = os.path.dirname(__file__)
+freq_path = os.path.join(base_path, "Model", "freq_map.pkl")
+
+GLOBAL_FREQ_MAP = joblib.load("Model/freq_map.pkl")
+    
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import paired_cosine_distances
@@ -179,11 +188,11 @@ def create_features(q1, q2):
     features['question1'] = q1
     features['question2'] = q2
     #Basic features
-    features['q1_len'] = features['question1'].str.len()
-    features['q2_len'] = features['question2'].str.len()
-    features['q1_num_words'] = features['question1'].apply(lambda row: len(row.split(" ")))
-    features['q2_num_words'] = features['question2'].apply(lambda row: len(row.split(" ")))
-    
+    features['q1_len'] = len(features['question1'])
+    features['q2_len'] = len(features['question2'])
+    features['q1_num_words'] = len(features['question1'].split(" "))
+    features['q2_num_words'] = len(features['question2'].split(" "))
+
     df = pd.DataFrame([features])
     df['word_common'] = df.apply(common_words, axis=1)
     df['word_total'] = df.apply(total_words, axis=1)
@@ -213,15 +222,12 @@ def create_features(q1, q2):
     df['token_sort_ratio'] = list(map(lambda x: x[2], fuzzy_features))
     df['token_set_ratio'] = list(map(lambda x: x[3], fuzzy_features))
 
-
-    all_questions = pd.Series(df['question1'].tolist() + df['question2'].tolist())
-    freq_map = all_questions.value_counts().to_dict()
-    df['q1_freq'] = df['question1'].map(freq_map)
-    df['q2_freq'] = df['question2'].map(freq_map)
+    
+    df['q1_freq'] = df['question1'].map(lambda x: GLOBAL_FREQ_MAP.get(str(x), 1))
+    df['q2_freq'] = df['question2'].map(lambda x: GLOBAL_FREQ_MAP.get(str(x), 1))
 
     df['noun_ratio'], df['verb_ratio'] = get_nlp_ratios(df)
 
-    model = SentenceTransformer('all-MiniLM-L6-v2')
     q1_embeddings = model.encode(df['question1'].tolist(), show_progress_bar=True)
     q2_embeddings = model.encode(df['question2'].tolist(), show_progress_bar=True)
     df['cosine_sim'] = 1 - paired_cosine_distances(q1_embeddings, q2_embeddings)

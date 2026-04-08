@@ -1,5 +1,5 @@
 import streamlit as st
-import pickle
+import joblib
 import pandas as pd
 
 from features import create_features  # your big feature file
@@ -7,7 +7,7 @@ from features import create_features  # your big feature file
 # =========================
 # LOAD MODEL (PIPELINE)
 # =========================
-model = pickle.load(open("Models/quora_pipeline.pkl", "rb"))
+model = joblib.load("Model/quora_final_pipeline.pkl")
 
 # =========================
 # UI
@@ -33,10 +33,6 @@ if st.button("Check Similarity"):
     else:
         # Create features
         df = create_features(q1, q2)
-
-        # IMPORTANT: Drop raw text columns if model doesn't use them
-        df = df.drop(columns=["question1", "question2"], errors="ignore")
-
         # Predict
         pred = model.predict(df)[0]
         prob = model.predict_proba(df)[0][1]
