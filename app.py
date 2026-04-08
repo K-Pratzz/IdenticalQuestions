@@ -7,7 +7,7 @@ from features import create_features  # your big feature file
 # =========================
 # LOAD MODEL (PIPELINE)
 # =========================
-model = pickle.load(open("models/quora_pipeline.pkl", "rb"))
+model = pickle.load(open("Models/quora_pipeline.pkl", "rb"))
 
 # =========================
 # UI
