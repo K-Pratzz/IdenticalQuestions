@@ -5,16 +5,14 @@ nltk.download('stopwords')
 from nltk.corpus import stopwords
 import joblib
 import os
-
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import paired_cosine_distances
 base_path = os.path.dirname(__file__)
 freq_path = os.path.join(base_path, "Model", "freq_map.pkl")
 
 GLOBAL_FREQ_MAP = joblib.load("Model/freq_map.pkl")
     
 model = SentenceTransformer('all-MiniLM-L6-v2')
-
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import paired_cosine_distances
 
 def common_words(row):
     w1 = set(map(lambda word: word.lower().strip(), row['question1'].split(" ")))
